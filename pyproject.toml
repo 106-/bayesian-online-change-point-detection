@@ -1,0 +1,22 @@
+[project]
+name = "bocpd"
+version = "0.1.0"
+description = "Bayesian Online Changepoint Detection library for practical real-time applications"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.3.5",
+    "scipy>=1.16.3",
+]
+
+[project.optional-dependencies]
+viz = [
+    "matplotlib>=3.10.7",
+]
+dev = [
+    "black>=25.11.0",
+    "mypy>=1.19.0",
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.8",
+]
