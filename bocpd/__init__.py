@@ -1,26 +1,26 @@
-"""Bayesian Online Changepoint Detection (BOCPD) library.
+"""ベイズオンライン変化点検知（BOCPD）ライブラリ
 
-This library provides a practical implementation of Bayesian online changepoint
-detection with support for various conjugate models and hazard functions.
+このライブラリは、様々な共役モデルとハザード関数をサポートする
+ベイズオンライン変化点検知の実用的な実装を提供します。
 
 Example:
     >>> import numpy as np
     >>> from bocpd import BOCPD, GaussianModel, ConstantHazard
     >>>
-    >>> # Initialize model and detector
+    >>> # モデルと検知器を初期化
     >>> model = GaussianModel()
-    >>> hazard = ConstantHazard(lambda_=0.01)  # Expected run length of 100
+    >>> hazard = ConstantHazard(lambda_=0.01)  # 期待ランレングス100
     >>> detector = BOCPD(model=model, hazard=hazard)
     >>>
-    >>> # Fit on historical data
+    >>> # 過去データで学習
     >>> historical_data = np.random.randn(100)
     >>> detector.fit(historical_data)
     >>>
-    >>> # Process new observations
+    >>> # 新しい観測値を処理
     >>> for x in np.random.randn(50):
     ...     result = detector.update(x)
     ...     if result["changepoint_prob"] > 0.5:
-    ...         print(f"Changepoint detected!")
+    ...         print(f"変化点を検知！")
 """
 
 from bocpd.detector import BOCPD

@@ -1,4 +1,4 @@
-"""Base class for predictive models in Bayesian online changepoint detection."""
+"""ベイズオンライン変化点検知のための予測モデル基底クラス"""
 
 from abc import ABC, abstractmethod
 from typing import Any
@@ -7,87 +7,88 @@ import numpy as np
 
 
 class PredictiveModel(ABC):
-    """Abstract base class for Bayesian conjugate predictive models.
+    """ベイズ共役予測モデルの抽象基底クラス
 
-    All predictive models must implement this interface to be used with BOCPD.
-    Models should maintain hyperparameters for a conjugate prior distribution
-    and provide methods for empirical Bayes initialization, prediction, and updating.
+    BOCPDで使用するには、全ての予測モデルがこのインターフェースを実装する必要があります。
+    モデルは共役事前分布のハイパーパラメータを維持し、経験ベイズ初期化、予測、更新の
+    メソッドを提供する必要があります。
     """
 
     @abstractmethod
     def fit_empirical(self, data: np.ndarray) -> None:
-        """Initialize hyperparameters using empirical Bayes from historical data.
+        """過去データから経験ベイズでハイパーパラメータを初期化
 
-        This method estimates reasonable hyperparameters from the observed data,
-        typically by computing sample statistics and setting weakly informative priors.
+        このメソッドは、観測データから妥当なハイパーパラメータを推定します。
+        通常、サンプル統計量を計算し、弱情報事前分布を設定します。
 
         Args:
-            data: Historical observations as a 1D numpy array.
+            data: 1次元numpy配列としての過去観測データ
 
         Raises:
-            ValueError: If data is empty or invalid.
+            ValueError: データが空または無効な場合
         """
         pass
 
     @abstractmethod
     def predict(self, x: float) -> float:
-        """Compute log probability density of observation x under the predictive distribution.
+        """予測分布の下での観測値xの対数確率密度を計算
 
-        The predictive distribution is the posterior predictive distribution given
-        the current hyperparameters (i.e., integrating out the latent parameters).
+        予測分布は、現在のハイパーパラメータが与えられた事後予測分布です
+        （つまり、潜在パラメータを積分消去したもの）。
 
         Args:
-            x: The observation to evaluate.
+            x: 評価する観測値
 
         Returns:
-            Log probability density log p(x | D_t) where D_t is the data seen so far.
+            対数確率密度 log p(x | D_t)。D_tはこれまでに観測されたデータ
         """
         pass
 
     @abstractmethod
     def update(self, x: float) -> "PredictiveModel":
-        """Update the posterior distribution given a new observation.
+        """新しい観測値が与えられた場合の事後分布を更新
 
-        This method performs a Bayesian update using the conjugacy property,
-        analytically computing the posterior hyperparameters.
+        このメソッドは共役性を利用してベイズ更新を実行し、
+        事後ハイパーパラメータを解析的に計算します。
 
-        IMPORTANT: This method should return a NEW instance with updated parameters,
-        leaving the original instance unchanged (immutability).
+        重要: このメソッドは更新されたパラメータを持つ新しいインスタンスを返し、
+        元のインスタンスは変更しません（不変性）。これは、BOCPDが各ランレングス
+        仮説ごとに独立したモデル状態を維持する必要があるためです。
 
         Args:
-            x: The new observation.
+            x: 新しい観測値
 
         Returns:
-            A new PredictiveModel instance with updated hyperparameters.
+            更新されたハイパーパラメータを持つ新しいPredictiveModelインスタンス
         """
         pass
 
     @abstractmethod
     def copy(self) -> "PredictiveModel":
-        """Create a deep copy of the model.
+        """モデルの深いコピーを作成
 
         Returns:
-            A new PredictiveModel instance with the same hyperparameters.
+            同じハイパーパラメータを持つ新しいPredictiveModelインスタンス
         """
         pass
 
     @abstractmethod
     def get_params(self) -> dict[str, Any]:
-        """Get current hyperparameters as a dictionary.
+        """現在のハイパーパラメータを辞書として取得
 
         Returns:
-            Dictionary containing all hyperparameters.
+            全てのハイパーパラメータを含む辞書
         """
         pass
 
     @abstractmethod
     def set_params(self, **params: Any) -> None:
-        """Set hyperparameters from a dictionary.
+        """辞書からハイパーパラメータを設定
 
         Args:
-            **params: Hyperparameters to set.
+            **params: 設定するハイパーパラメータ
 
         Raises:
-            ValueError: If parameters are invalid.
+            ValueError: パラメータが無効な場合
         """
         pass

@@ -1,4 +1,4 @@
-"""Predictive models for Bayesian online changepoint detection."""
+"""ベイズオンライン変化点検知のための予測モデル"""
 
 from bocpd.models.base import PredictiveModel
 from bocpd.models.gaussian import GaussianModel

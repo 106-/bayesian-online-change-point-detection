@@ -1,4 +1,4 @@
-"""Constant hazard function implementation."""
+"""一定ハザード関数の実装"""
 
 import numpy as np
 
@@ -6,24 +6,23 @@ from bocpd.hazards.base import HazardFunction
 
 
 class ConstantHazard(HazardFunction):
-    """Constant hazard function.
+    """一定ハザード関数
 
-    Assumes a constant probability of changepoint occurrence at each time step,
-    regardless of the run length. This corresponds to an exponential distribution
-    for the time between changepoints.
+    ランレングスに関係なく、各時間ステップで一定の変化点発生確率を仮定します。
+    これは、変化点間の時間の指数分布に対応します。
 
-    If lambda_ is the hazard rate, the expected run length is 1/lambda_.
+    lambda_がハザード率の場合、期待ランレングスは1/lambda_です。
     """
 
     def __init__(self, lambda_: float) -> None:
-        """Initialize the constant hazard function.
+        """一定ハザード関数を初期化
 
         Args:
-            lambda_: The constant hazard rate (0 < lambda_ <= 1).
-                    For example, lambda_=0.01 means an expected run length of 100.
+            lambda_: 一定のハザード率（0 < lambda_ <= 1）
+                    例: lambda_=0.01は期待ランレングス100を意味する
 
         Raises:
-            ValueError: If lambda_ is not in (0, 1].
+            ValueError: lambda_が(0, 1]の範囲にない場合
         """
         if not (0 < lambda_ <= 1):
             raise ValueError(f"lambda_ must be in (0, 1], got {lambda_}")
@@ -31,16 +30,16 @@ class ConstantHazard(HazardFunction):
         self.lambda_ = lambda_
 
     def compute(self, r: int) -> float:
-        """Compute the constant hazard at run length r.
+        """ランレングスrでの一定ハザードを計算
 
         Args:
-            r: The run length (non-negative integer).
+            r: ランレングス（非負整数）
 
         Returns:
-            The constant hazard probability lambda_.
+            一定のハザード確率lambda_
 
         Raises:
-            ValueError: If r is negative.
+            ValueError: rが負の場合
         """
         if r < 0:
             raise ValueError(f"Run length must be non-negative, got {r}")
@@ -48,13 +47,13 @@ class ConstantHazard(HazardFunction):
         return self.lambda_
 
     def compute_survival(self, r: int) -> float:
-        """Compute the survival probability.
+        """生存確率を計算
 
         Args:
-            r: The run length (non-negative integer).
+            r: ランレングス（非負整数）
 
         Returns:
-            The survival probability 1 - lambda_.
+            生存確率 1 - lambda_
         """
         if r < 0:
             raise ValueError(f"Run length must be non-negative, got {r}")
@@ -62,13 +61,13 @@ class ConstantHazard(HazardFunction):
         return 1.0 - self.lambda_
 
     def compute_log(self, r: int) -> float:
-        """Compute log of the hazard function.
+        """ハザード関数の対数を計算
 
         Args:
-            r: The run length (non-negative integer).
+            r: ランレングス（非負整数）
 
         Returns:
-            Log of hazard probability log(lambda_).
+            ハザード確率の対数log(lambda_)
         """
         if r < 0:
             raise ValueError(f"Run length must be non-negative, got {r}")
@@ -76,20 +75,20 @@ class ConstantHazard(HazardFunction):
         return np.log(self.lambda_)
 
     def compute_log_survival(self, r: int) -> float:
-        """Compute log of the survival function.
+        """生存関数の対数を計算
 
         Args:
-            r: The run length (non-negative integer).
+            r: ランレングス（非負整数）
 
         Returns:
-            Log of survival probability log(1 - lambda_).
+            生存確率の対数log(1 - lambda_)
         """
         if r < 0:
             raise ValueError(f"Run length must be non-negative, got {r}")
 
-        return np.log1p(-self.lambda_)  # log1p for numerical stability
+        return np.log1p(-self.lambda_)  # 数値安定性のためlog1pを使用
 
     def __repr__(self) -> str:
-        """String representation."""
+        """文字列表現"""
         expected_run_length = 1.0 / self.lambda_
         return f"ConstantHazard(lambda_={self.lambda_:.4f}, expected_run_length={expected_run_length:.2f})"

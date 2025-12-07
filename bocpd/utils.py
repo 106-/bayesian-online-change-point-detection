@@ -1,4 +1,4 @@
-"""Utility functions for Bayesian online changepoint detection."""
+"""ベイズオンライン変化点検知のためのユーティリティ関数"""
 
 from typing import Optional
 
@@ -6,13 +6,12 @@ import numpy as np
 
 
 def log_sum_exp(log_probs: np.ndarray) -> float:
-    """Compute log(sum(exp(log_probs))) in a numerically stable way.
+    """数値的に安定した方法でlog(sum(exp(log_probs)))を計算
 
-    This is the log-sum-exp trick for numerical stability when working
-    with log probabilities.
+    これは、対数確率を扱う際の数値安定性のためのlog-sum-expトリックです。
 
     Args:
-        log_probs: Array of log probabilities.
+        log_probs: 対数確率の配列
 
     Returns:
         log(sum(exp(log_probs)))
@@ -33,22 +32,22 @@ def detect_changepoints(
     run_length_dist: np.ndarray,
     threshold: float = 0.5,
 ) -> bool:
-    """Detect if a changepoint occurred based on the run length distribution.
+    """ランレングス分布に基づいて変化点が発生したかを検知
 
-    A changepoint is detected if P(r_t = 0) > threshold.
+    P(r_t = 0) > thresholdの場合に変化点と判定します。
 
     Args:
-        run_length_dist: Run length probability distribution (not log probabilities).
-        threshold: Threshold for changepoint detection (default: 0.5).
+        run_length_dist: ランレングス確率分布（対数確率ではない）
+        threshold: 変化点検知の閾値（デフォルト: 0.5）
 
     Returns:
-        True if a changepoint is detected, False otherwise.
+        変化点が検知された場合True、それ以外False
 
     Raises:
-        ValueError: If threshold is not in [0, 1].
+        ValueError: thresholdが[0, 1]の範囲にない場合
 
     Example:
-        >>> dist = np.array([0.7, 0.2, 0.1])  # High probability at r=0
+        >>> dist = np.array([0.7, 0.2, 0.1])  # r=0で高い確率
         >>> detect_changepoints(dist, threshold=0.5)
         True
     """
@@ -63,20 +62,20 @@ def prune_run_lengths(
     models: list,
     threshold: float = 1e-10,
 ) -> tuple[np.ndarray, list]:
-    """Prune run lengths with very low probability for memory efficiency.
+    """メモリ効率化のため、非常に低い確率のランレングスを刈り込む
 
-    Removes run lengths with probability below the threshold and renormalizes.
+    閾値以下の確率を持つランレングスを削除し、再正規化します。
 
     Args:
-        log_run_length_dist: Log run length distribution.
-        models: List of models corresponding to each run length.
-        threshold: Probability threshold for pruning (default: 1e-10).
+        log_run_length_dist: 対数ランレングス分布
+        models: 各ランレングスに対応するモデルのリスト
+        threshold: 刈り込みの確率閾値（デフォルト: 1e-10）
 
     Returns:
-        Tuple of (pruned_log_distribution, pruned_models).
+        (刈り込まれた対数分布, 刈り込まれたモデル)のタプル
 
     Example:
-        >>> log_dist = np.array([0, -5, -20, -30])  # Last two are very unlikely
+        >>> log_dist = np.array([0, -5, -20, -30])  # 最後の2つは非常に低確率
         >>> models = [f"model_{i}" for i in range(4)]
         >>> new_dist, new_models = prune_run_lengths(log_dist, models, threshold=1e-8)
         >>> len(new_models) < len(models)
@@ -86,7 +85,7 @@ def prune_run_lengths(
     mask = probs >= threshold
 
     if not np.any(mask):
-        # Keep at least the most likely one
+        # 少なくとも最も確からしいものを1つ保持
         max_idx = np.argmax(log_run_length_dist)
         mask = np.zeros_like(mask)
         mask[max_idx] = True
@@ -94,7 +93,7 @@ def prune_run_lengths(
     pruned_log_dist = log_run_length_dist[mask]
     pruned_models = [model for i, model in enumerate(models) if mask[i]]
 
-    # Renormalize
+    # 再正規化
     pruned_log_dist -= log_sum_exp(pruned_log_dist)
 
     return pruned_log_dist, pruned_models
@@ -103,23 +102,23 @@ def prune_run_lengths(
 def plot_run_length_history(
     history: list[np.ndarray],
     figsize: tuple[int, int] = (12, 6),
-    title: str = "Run Length Distribution Over Time",
+    title: str = "時間経過に伴うランレングス分布",
 ) -> "matplotlib.figure.Figure":
-    """Plot the run length distribution over time.
+    """時間経過に伴うランレングス分布をプロット
 
-    Creates a heatmap showing how the run length distribution evolves,
-    useful for visualizing changepoint detection.
+    ランレングス分布の変化を示すヒートマップを作成します。
+    変化点検知の可視化に有用です。
 
     Args:
-        history: List of run length distributions (probabilities, not log) at each timestep.
-        figsize: Figure size (width, height) in inches.
-        title: Plot title.
+        history: 各タイムステップでのランレングス分布（確率、対数ではない）のリスト
+        figsize: 図のサイズ（幅、高さ）インチ単位
+        title: プロットのタイトル
 
     Returns:
-        Matplotlib Figure object.
+        MatplotlibのFigureオブジェクト
 
     Raises:
-        ImportError: If matplotlib is not installed.
+        ImportError: matplotlibがインストールされていない場合
 
     Example:
         >>> history = [np.array([0.9, 0.1]), np.array([0.2, 0.7, 0.1])]
@@ -133,7 +132,7 @@ def plot_run_length_history(
             "Install it with: pip install matplotlib"
         ) from e
 
-    # Convert to 2D array (pad shorter distributions with zeros)
+    # 2次元配列に変換（短い分布はゼロでパディング）
     max_len = max(len(dist) for dist in history)
     matrix = np.zeros((len(history), max_len))
     for i, dist in enumerate(history):
@@ -148,15 +147,15 @@ def plot_run_length_history(
         interpolation="nearest",
     )
 
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Run Length")
+    ax.set_xlabel("時刻")
+    ax.set_ylabel("ランレングス")
     ax.set_title(title)
 
-    # Add colorbar
+    # カラーバーを追加
     cbar = plt.colorbar(im, ax=ax)
-    cbar.set_label("Probability")
+    cbar.set_label("確率")
 
-    # Highlight changepoints (where r=0 has high probability)
+    # 変化点を強調表示（r=0が高確率の場所）
     changepoint_threshold = 0.5
     changepoints = [i for i, dist in enumerate(history) if dist[0] > changepoint_threshold]
     for cp in changepoints:
@@ -170,16 +169,16 @@ def compute_negative_log_likelihood(
     observations: np.ndarray,
     prediction_log_probs: np.ndarray,
 ) -> float:
-    """Compute the negative log-likelihood of observations.
+    """観測値の負の対数尤度を計算
 
-    This can be used to evaluate the model's predictive performance.
+    モデルの予測性能を評価するために使用できます。
 
     Args:
-        observations: Array of observed values.
-        prediction_log_probs: Array of log probabilities for each observation.
+        observations: 観測値の配列
+        prediction_log_probs: 各観測値の対数確率の配列
 
     Returns:
-        Negative log-likelihood (lower is better).
+        負の対数尤度（小さいほど良い）
 
     Example:
         >>> obs = np.array([1.0, 2.0, 3.0])

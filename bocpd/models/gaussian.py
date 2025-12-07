@@ -1,4 +1,4 @@
-"""Gaussian predictive model with Normal-Inverse-Gamma prior."""
+"""正規-逆ガンマ事前分布を持つガウス予測モデル"""
 
 from typing import Any
 
@@ -9,20 +9,18 @@ from bocpd.models.base import PredictiveModel
 
 
 class GaussianModel(PredictiveModel):
-    """Gaussian likelihood with Normal-Inverse-Gamma conjugate prior.
+    """正規-逆ガンマ共役事前分布を持つガウス尤度モデル
 
-    This model assumes observations come from a Gaussian distribution with unknown
-    mean and variance. The prior is a Normal-Inverse-Gamma distribution, which
-    maintains conjugacy and allows for analytical posterior updates.
+    このモデルは、観測値が未知の平均と分散を持つガウス分布から生成されると仮定します。
+    事前分布は正規-逆ガンマ分布であり、共役性を維持し、解析的な事後更新を可能にします。
 
-    Hyperparameters:
-        mu0: Prior mean of the Gaussian mean parameter.
-        kappa0: Prior precision (inverse variance) scaling for the mean.
-        alpha0: Prior shape parameter for the precision (inverse variance).
-        beta0: Prior rate parameter for the precision.
+    ハイパーパラメータ:
+        mu0: ガウス平均パラメータの事前平均
+        kappa0: 平均の事前精度（逆分散）スケーリング
+        alpha0: 精度（逆分散）の事前形状パラメータ
+        beta0: 精度の事前レートパラメータ
 
-    The predictive distribution is a Student's t-distribution with parameters
-    derived from the hyperparameters.
+    予測分布は、ハイパーパラメータから導出されたパラメータを持つスチューデントのt分布です。
     """
 
     def __init__(
@@ -32,16 +30,16 @@ class GaussianModel(PredictiveModel):
         alpha0: float = 1.0,
         beta0: float = 1.0,
     ) -> None:
-        """Initialize the Gaussian model with hyperparameters.
+        """ハイパーパラメータでガウスモデルを初期化
 
         Args:
-            mu0: Prior mean (default: 0.0).
-            kappa0: Prior precision scaling (default: 1.0, must be > 0).
-            alpha0: Prior shape parameter (default: 1.0, must be > 0).
-            beta0: Prior rate parameter (default: 1.0, must be > 0).
+            mu0: 事前平均（デフォルト: 0.0）
+            kappa0: 事前精度スケーリング（デフォルト: 1.0、正の値である必要あり）
+            alpha0: 事前形状パラメータ（デフォルト: 1.0、正の値である必要あり）
+            beta0: 事前レートパラメータ（デフォルト: 1.0、正の値である必要あり）
 
         Raises:
-            ValueError: If kappa0, alpha0, or beta0 are not positive.
+            ValueError: kappa0、alpha0、beta0が正でない場合
         """
         if kappa0 <= 0:
             raise ValueError(f"kappa0 must be positive, got {kappa0}")
@@ -56,74 +54,74 @@ class GaussianModel(PredictiveModel):
         self.beta0 = beta0
 
     def fit_empirical(self, data: np.ndarray) -> None:
-        """Initialize hyperparameters using empirical Bayes.
+        """経験ベイズを使用してハイパーパラメータを初期化
 
-        Estimates hyperparameters from the data using sample statistics.
-        Sets weakly informative priors centered around the empirical estimates.
+        サンプル統計量を使用してデータからハイパーパラメータを推定します。
+        経験的推定値を中心とした弱情報事前分布を設定します。
 
         Args:
-            data: Historical observations (1D array).
+            data: 過去観測データ（1次元配列）
 
         Raises:
-            ValueError: If data is empty or contains fewer than 2 observations.
+            ValueError: データが空または2未満の観測値しか含まない場合
         """
         if len(data) == 0:
             raise ValueError("Data must not be empty")
         if len(data) < 2:
             raise ValueError("Need at least 2 observations for empirical fitting")
 
-        # Compute sample statistics
+        # サンプル統計量を計算
         sample_mean = np.mean(data)
         sample_var = np.var(data, ddof=1)
 
-        # Set mu0 to sample mean
+        # mu0をサンプル平均に設定
         self.mu0 = sample_mean
 
-        # Set kappa0 to be weakly informative (equivalent to ~1 observation)
+        # kappa0を弱情報的に設定（約1観測値相当）
         self.kappa0 = 1.0
 
-        # Set alpha0 and beta0 based on sample variance
-        # Using method of moments: E[variance] = beta/(alpha-1) for alpha > 1
-        # Set alpha0 = 2 (minimal value for finite mean) and beta0 accordingly
+        # サンプル分散に基づいてalpha0とbeta0を設定
+        # モーメント法を使用: E[分散] = beta/(alpha-1) (alpha > 1の場合)
+        # alpha0 = 2（有限平均の最小値）に設定し、それに応じてbeta0を設定
         self.alpha0 = 2.0
         self.beta0 = sample_var * (self.alpha0 - 1)
 
     def predict(self, x: float) -> float:
-        """Compute log probability density under the predictive distribution.
+        """予測分布の下での対数確率密度を計算
 
-        The predictive distribution is a Student's t-distribution with:
-        - degrees of freedom: 2 * alpha0
-        - location: mu0
-        - scale: sqrt(beta0 * (kappa0 + 1) / (alpha0 * kappa0))
+        予測分布は以下のパラメータを持つスチューデントのt分布です:
+        - 自由度: 2 * alpha0
+        - 位置: mu0
+        - スケール: sqrt(beta0 * (kappa0 + 1) / (alpha0 * kappa0))
 
         Args:
-            x: Observation to evaluate.
+            x: 評価する観測値
 
         Returns:
-            Log probability density log p(x | hyperparameters).
+            対数確率密度 log p(x | ハイパーパラメータ)
         """
-        # Student's t parameters
+        # スチューデントのtパラメータ
         df = 2 * self.alpha0
         loc = self.mu0
         scale = np.sqrt(self.beta0 * (self.kappa0 + 1) / (self.alpha0 * self.kappa0))
 
-        # Compute log probability using scipy
+        # scipyを使用して対数確率を計算
         log_prob = stats.t.logpdf(x, df=df, loc=loc, scale=scale)
 
         return log_prob
 
     def update(self, x: float) -> "GaussianModel":
-        """Update posterior given a new observation.
+        """新しい観測値が与えられた場合の事後分布を更新
 
-        Performs analytical Bayesian update using conjugacy.
+        共役性を利用して解析的なベイズ更新を実行します。
 
         Args:
-            x: New observation.
+            x: 新しい観測値
 
         Returns:
-            New GaussianModel instance with updated hyperparameters.
+            更新されたハイパーパラメータを持つ新しいGaussianModelインスタンス
         """
-        # Posterior hyperparameters (conjugate update)
+        # 事後ハイパーパラメータ（共役更新）
         kappa_new = self.kappa0 + 1
         mu_new = (self.kappa0 * self.mu0 + x) / kappa_new
         alpha_new = self.alpha0 + 0.5
@@ -140,10 +138,10 @@ class GaussianModel(PredictiveModel):
         )
 
     def copy(self) -> "GaussianModel":
-        """Create a deep copy of the model.
+        """モデルの深いコピーを作成
 
         Returns:
-            New GaussianModel instance with the same hyperparameters.
+            同じハイパーパラメータを持つ新しいGaussianModelインスタンス
         """
         return GaussianModel(
             mu0=self.mu0,
@@ -153,10 +151,10 @@ class GaussianModel(PredictiveModel):
         )
 
     def get_params(self) -> dict[str, Any]:
-        """Get current hyperparameters.
+        """現在のハイパーパラメータを取得
 
         Returns:
-            Dictionary with keys: mu0, kappa0, alpha0, beta0.
+            キー: mu0, kappa0, alpha0, beta0を持つ辞書
         """
         return {
             "mu0": self.mu0,
@@ -166,13 +164,13 @@ class GaussianModel(PredictiveModel):
         }
 
     def set_params(self, **params: Any) -> None:
-        """Set hyperparameters.
+        """ハイパーパラメータを設定
 
         Args:
-            **params: Hyperparameters to set (mu0, kappa0, alpha0, beta0).
+            **params: 設定するハイパーパラメータ（mu0, kappa0, alpha0, beta0）
 
         Raises:
-            ValueError: If parameters are invalid.
+            ValueError: パラメータが無効な場合
         """
         if "mu0" in params:
             self.mu0 = params["mu0"]
@@ -190,7 +188,7 @@ class GaussianModel(PredictiveModel):
             self.beta0 = params["beta0"]
 
     def __repr__(self) -> str:
-        """String representation of the model."""
+        """モデルの文字列表現"""
         return (
             f"GaussianModel(mu0={self.mu0:.4f}, kappa0={self.kappa0:.4f}, "
             f"alpha0={self.alpha0:.4f}, beta0={self.beta0:.4f})"
