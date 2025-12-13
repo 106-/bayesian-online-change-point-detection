@@ -23,6 +23,10 @@ dev = [
 
 [dependency-groups]
 dev = [
+    "ccxt>=4.5.25",
     "ipykernel>=7.1.0",
+    "ipywidgets>=8.1.8",
     "matplotlib-fontja>=1.1.0",
+    "pandas>=2.3.3",
+    "tqdm>=4.67.1",
 ]
