@@ -120,7 +120,7 @@ class BOCPD:
         # ステップ3: 変化点確率を計算（r_t = 0）
         # p(r_t = 0 | x_{1:t}) \propto p(x_t | r_t=0) * sum_r h(r) * p(r_{t-1} = r | x_{1:t-1})
         log_changepoint_prob_terms = (
-            pred_log_probs
+            self.base_model.predict(x)
             + np.array([self.hazard.compute_log(r) for r in range(len(self.models))])
             + prev_run_length_dist
         )
